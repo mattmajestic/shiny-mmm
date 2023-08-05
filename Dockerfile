@@ -20,7 +20,7 @@ RUN R -e 'install.packages(c("shiny","shinydashboard","ggplot2", "shinydashboard
 
 
 # copy the app directory into the image
-COPY ./shiny-app/* /srv/shiny-server/
+COPY ./* /srv/shiny-server/
 
 # run app
 CMD ["/usr/bin/shiny-server"]
