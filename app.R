@@ -2,6 +2,7 @@ library(shiny)
 library(dplyr)
 library(ggplot2)
 library(prophet)
+library(shinythemes)
 
 # Read data from CSV
 data <- read.csv("mmm_demo.csv", stringsAsFactors = FALSE)
@@ -14,15 +15,32 @@ data <- data %>%
 
 # Shiny App
 ui <- fluidPage(
+  theme = shinytheme("cerulean"),  # Apply the "Cerulean" theme
   titlePanel("Media Mix Model (MMM) Analysis"),
-  mainPanel(
-    plotOutput("revenuePlot"),
-    dataTableOutput("metricsTable"),
-    plotOutput("prophetPlot")
+  tabsetPanel(
+    tabPanel("About", 
+             uiOutput("aboutContent")
+    ),
+    tabPanel("Plots",
+             fluidRow(
+               column(width = 6,
+                      plotOutput("revenuePlot"),
+                      dataTableOutput("metricsTable")
+               ),
+               column(width = 6,
+                      plotOutput("prophetPlot")
+               )
+             )
+    )
   )
 )
 
 server <- function(input, output) {
+  
+  # Render the "About" tab content
+  output$aboutContent <- renderUI({
+    includeMarkdown("README.md")
+  })
   
   # Revenue Plot
   output$revenuePlot <- renderPlot({
