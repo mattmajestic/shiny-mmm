@@ -6,6 +6,7 @@ library(shinythemes)
 library(markdown)
 library(dygraphs)
 library(shinydashboard)
+library(shinycssloaders) 
 
 # Read data from CSV
 data <- read.csv("mmm_demo.csv", stringsAsFactors = FALSE)
@@ -29,20 +30,18 @@ ui <- dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName = "about", 
-              uiOutput("aboutContent")
+              uiOutput("aboutContent")  %>% withSpinner(type = 5,size = 2)
       ),
       tabItem(tabName = "analysis",
               fluidRow(
-                box(title = "Revenue Plot", width = 6,
-                    plotOutput("revenuePlot")
-                ),
-                box(title = "Prophet Forecast for Sales", width = 6,
-                    dygraphOutput("prophetPlot")
-                )
+                  box(title = "Revenue Plot", width = 6,
+                      plotOutput("revenuePlot") %>% withSpinner(type = 4,size = 2)),
+                  box(title = "Prophet Forecast for Sales", width = 6,
+                      dygraphOutput("prophetPlot") %>% withSpinner(type = 7,size = 2))
               ),
               fluidRow(
                 column(width = 12,
-                       dataTableOutput("metricsTable")
+                       dataTableOutput("metricsTable") %>% withSpinner(type = 8,size = 2)
                 )
               )
       )
@@ -75,21 +74,33 @@ server <- function(input, output) {
     select(ordine_data, revenue) %>%
     rename(ds = ordine_data, y = revenue)
   
-  prophet_model <- prophet(sales_data)
-  forecast <- predict(prophet_model, sales_data)
+  # Adding a loader while the Prophet model is being trained
+  output$prophetPlot <- renderUI({
+    withSpinner(dygraphOutput("prophetPlot"))
+  })
   
-  # Project the next year
-  future_dates <- seq(max(sales_data$ds) + 1, length.out = 365, by = "day")
-  future_df <- data.frame(ds = future_dates)
+  prophet_model <- reactiveVal(NULL) # To store the Prophet model
   
-  forecast_future <- predict(prophet_model, future_df)
-  forecast <- rbind(forecast, forecast_future)
+  observeEvent(sales_data, {
+    # Train the Prophet model once the sales_data is available
+    prophet_model(prophet(sales_data))
+  })
   
-  # Convert forecast data to time series format for dygraph
-  forecast_ts <- xts::xts(forecast$yhat, order.by = forecast$ds)
-  
-  # Prophet Plot
+  # Generate Prophet Forecast and Plot
   output$prophetPlot <- renderDygraph({
+    req(prophet_model())
+    forecast <- predict(prophet_model(), sales_data)
+    
+    # Project the next year
+    future_dates <- seq(max(sales_data$ds) + 1, length.out = 365, by = "day")
+    future_df <- data.frame(ds = future_dates)
+    
+    forecast_future <- predict(prophet_model(), future_df)
+    forecast <- rbind(forecast, forecast_future)
+    
+    # Convert forecast data to time series format for dygraph
+    forecast_ts <- xts::xts(forecast$yhat, order.by = forecast$ds)
+    
     dygraph(forecast_ts, main = "Prophet Forecast for Sales") %>%
       dyRangeSelector()
   })
