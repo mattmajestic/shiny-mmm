@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 # install R packages required 
 # Change the packages list to suit your needs
-RUN R -e 'install.packages(c("shiny","shinydashboard","ggplot2", "shinydashboardPlus", "prophet","shinyjs","shinythemes","dplyr"), \
+RUN R -e 'install.packages(c("shiny","shinydashboard","ggplot2", "markdown", "prophet","dygraphs","shinythemes","dplyr"), \
             repos="https://packagemanager.rstudio.com/cran/__linux__/focal/2021-04-23"\
           )'
 

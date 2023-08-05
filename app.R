@@ -3,6 +3,9 @@ library(dplyr)
 library(ggplot2)
 library(prophet)
 library(shinythemes)
+library(markdown)
+library(dygraphs)
+library(shinydashboard)
 
 # Read data from CSV
 data <- read.csv("mmm_demo.csv", stringsAsFactors = FALSE)
@@ -14,23 +17,35 @@ data <- data %>%
          Media_Efficiency = revenue / Total_Spent)
 
 # Shiny App
-ui <- fluidPage(
-  theme = shinytheme("cerulean"),  # Apply the "Cerulean" theme
-  titlePanel("Media Mix Model (MMM) Analysis"),
-  tabsetPanel(
-    tabPanel("About", 
-             uiOutput("aboutContent")
-    ),
-    tabPanel("Plots",
-             fluidRow(
-               column(width = 6,
-                      plotOutput("revenuePlot"),
-                      dataTableOutput("metricsTable")
-               ),
-               column(width = 6,
-                      plotOutput("prophetPlot")
-               )
-             )
+ui <- dashboardPage(
+  skin = "black",  # Apply the "darkly" theme
+  dashboardHeader(title = "Media Mix Model (MMM) Analysis"),
+  dashboardSidebar(
+    sidebarMenu(
+      menuItem("About", tabName = "about", icon = icon("info")),
+      menuItem("Analysis", tabName = "analysis", icon = icon("chart-line"))
+    )
+  ),
+  dashboardBody(
+    tabItems(
+      tabItem(tabName = "about", 
+              uiOutput("aboutContent")
+      ),
+      tabItem(tabName = "analysis",
+              fluidRow(
+                box(title = "Revenue Plot", width = 6,
+                    plotOutput("revenuePlot")
+                ),
+                box(title = "Prophet Forecast for Sales", width = 6,
+                    dygraphOutput("prophetPlot")
+                )
+              ),
+              fluidRow(
+                column(width = 12,
+                       dataTableOutput("metricsTable")
+                )
+              )
+      )
     )
   )
 )
@@ -39,7 +54,7 @@ server <- function(input, output) {
   
   # Render the "About" tab content
   output$aboutContent <- renderUI({
-    includeMarkdown("README.md")
+    shiny::includeMarkdown("README.md")
   })
   
   # Revenue Plot
@@ -70,13 +85,13 @@ server <- function(input, output) {
   forecast_future <- predict(prophet_model, future_df)
   forecast <- rbind(forecast, forecast_future)
   
+  # Convert forecast data to time series format for dygraph
+  forecast_ts <- xts::xts(forecast$yhat, order.by = forecast$ds)
+  
   # Prophet Plot
-  output$prophetPlot <- renderPlot({
-    ggplot(forecast, aes(x = ds, y = yhat)) +
-      geom_line() +
-      geom_ribbon(aes(ymin = yhat_lower, ymax = yhat_upper), alpha = 0.2) +
-      labs(title = "Prophet Forecast for Sales", x = "Date", y = "Sales Forecast") +
-      theme_minimal()
+  output$prophetPlot <- renderDygraph({
+    dygraph(forecast_ts, main = "Prophet Forecast for Sales") %>%
+      dyRangeSelector()
   })
 }
 
