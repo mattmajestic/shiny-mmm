@@ -1,6 +1,5 @@
-
 # get shiny server and R from the rocker project
-FROM rocker/shiny:4.0.5
+FROM rocker/shiny:latest
 
 # system libraries
 # Try to only install system libraries you actually need
