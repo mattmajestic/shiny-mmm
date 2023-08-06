@@ -8,7 +8,7 @@ ui <- dashboardPage(
     )
   ),
   dashboardBody(
-    tags$head(tags$link(rel="shortcut icon", href="favicon.svg")),
+    # tags$head(tags$link(rel="shortcut icon", href="favicon.svg")),
     tabItems(
       tabItem(tabName = "about", 
               uiOutput("aboutContent")  %>% withSpinner(type = 5,size = 2)
