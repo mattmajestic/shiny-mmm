@@ -10,8 +10,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     libv8-dev \
     libxml2-dev \
-    libcairo2-dev \
-    libxt-dev
+    libcairo2-dev 
   
 # install R packages required 
 RUN R -e 'install.packages(c("shiny","shinydashboard","ggplot2", "markdown", "prophet","dygraphs","shinythemes","dplyr","shinycssloaders"), \
