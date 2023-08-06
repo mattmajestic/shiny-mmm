@@ -1,5 +1,5 @@
 # get shiny server and R from the rocker project
-FROM rocker/shiny:latest
+FROM rocker/shiny-verse:latest
 
 # system libraries
 # Try to only install system libraries you actually need
@@ -20,6 +20,8 @@ RUN R -e 'install.packages(c("shiny","shinydashboard","ggplot2", "markdown", "pr
 
 # copy the app directory into the image
 COPY ./shiny-app/* /srv/shiny-server/
+
+EXPOSE 3838
 
 # run app
 CMD ["/usr/bin/shiny-server"]
